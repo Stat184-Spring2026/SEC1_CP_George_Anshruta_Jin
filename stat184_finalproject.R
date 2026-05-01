@@ -42,11 +42,42 @@ RetatrutideOrgEffects <- RetatrutideOrgRawData[[2]]
 # Getting the semaglutide & placebo column
 
 SemaglutidePercent <- SemaglutideEffects |>
-  select(1,2) 
-
-View(SemaglutidePercent)
+  # Selecting the semaglutide column
+  select(2) |> 
+  # Removing the bracket
+  separate(
+    1,
+    into = c("personCount", "Semaglutide"),
+    sep = " \\(") |>
+  mutate(
+    Semaglutide = str_remove(Semaglutide, "\\)")
+  ) |>
+  select(2)
+  
 
 PlaceboPercent <- SemaglutideEffects |>
-  select(1,5) 
+  # Selecting the placebo column
+  select(5) |>
+  # Removing the bracket
+  separate(
+    1,
+    into = c("personCount", "Placebo"),
+    sep = " \\(") |>
+    mutate(
+      Placebo = str_remove(Placebo, "\\)")
+    ) |>
+  select(2)
 
-View(PlaceboPercent)
+
+Effects <- SemaglutideEffects |>
+  select(1)
+
+# Binding all the columns together
+SemaglutidePlacebo <- bind_cols(
+  Effects,
+  SemaglutidePercent,
+  PlaceboPercent
+)  
+
+
+
