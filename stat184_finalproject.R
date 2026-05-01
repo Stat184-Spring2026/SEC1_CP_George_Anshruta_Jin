@@ -70,14 +70,22 @@ PlaceboPercent <- SemaglutideEffects |>
 
 
 Effects <- SemaglutideEffects |>
-  select(1)
+  select(1) 
 
 # Binding all the columns together
 SemaglutidePlacebo <- bind_cols(
   Effects,
   SemaglutidePercent,
   PlaceboPercent
-)  
+) |>
+  filter(Event == 'Nausea' | Event == 'Constipation' | Event == 'Diarrhea' | Event == 'Vomiting' | Event == 'Headache' | Event =='Abdominal pain' | 
+           Event =='Fatigue' | Event =='Upper respiratory tract infection' | Event == 'Dizziness')
+
+View(SemaglutidePlacebo)
 
 
+# Creating graph
 
+ggplot(
+  data = 
+)
