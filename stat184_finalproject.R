@@ -50,7 +50,7 @@ SemaglutidePercent <- SemaglutideEffects |>
     into = c("personCount", "Semaglutide"),
     sep = " \\(") |>
   mutate(
-    Semaglutide = str_remove(Semaglutide, "\\)")
+    Semaglutide = as.numeric(str_remove(Semaglutide, "\\)"))
   ) |>
   select(2)
   
@@ -64,7 +64,7 @@ PlaceboPercent <- SemaglutideEffects |>
     into = c("personCount", "Placebo"),
     sep = " \\(") |>
     mutate(
-      Placebo = str_remove(Placebo, "\\)")
+      Placebo = as.numeric(str_remove(Placebo, "\\)"))
     ) |>
   select(2)
 
@@ -79,13 +79,27 @@ SemaglutidePlacebo <- bind_cols(
   PlaceboPercent
 ) |>
   filter(Event == 'Nausea' | Event == 'Constipation' | Event == 'Diarrhea' | Event == 'Vomiting' | Event == 'Headache' | Event =='Abdominal pain' | 
-           Event =='Fatigue' | Event =='Upper respiratory tract infection' | Event == 'Dizziness')
-
-View(SemaglutidePlacebo)
+           Event =='Fatigue' | Event =='Upper respiratory tract infection' | Event == 'Dizziness') |>
+  pivot_longer(
+    cols = c(Semaglutide, Placebo),
+    names_to = "Group",
+    values_to = "Percent"
+  )
 
 
 # Creating graph
 
 ggplot(
-  data = 
-)
+  data = SemaglutidePlacebo,  # Tidied data
+  mapping = aes(
+    x = Event,
+    y = Percent,
+    fill = Group
+  )
+) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Semaglutide vs Placebo Side Effects",
+    x = "Side Effect",
+    y = "Percentage (%)"
+  )
