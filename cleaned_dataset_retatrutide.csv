@@ -1,0 +1,31 @@
+﻿observations,Outcome variables,Retatrutide arm (mg/week),Control arm,I2 (%),"Pooled effect size, RR (95% CI)",P value
+1,All adverse events,Retatrutide 4,placebo,0,"1.11 (0.93, 1.31)",0.24
+2,All adverse events,Retatrutide 8,Placebo,0,"1.23 (1.06, 1.44)",0.007
+3,All adverse events,Retatrutide 12,Placebo,0,"1.34 (1.16, 1.55)",<0.0001
+4,Vomiting,Retatrutide 4,Placebo,38,"4.62 (1.03, 20.67)",0.05
+5,Vomiting,Retatrutide 8,Placebo,0,"8.13 (1.93, 34.21)",0.004
+6,Vomiting,Retatrutide 12,Placebo,0,"8.98 (2.49, 32.34)",0.0008
+7,Nausea,Retatrutide 4,Placebo,0,"2.69 (1.36, 5.30)",0.004
+8,Nausea,Retatrutide 8,Placebo,7,"4.27 (2.25, 8.08)",<0.00001
+9,Nausea,Retatrutide 12,Placebo,0,"4.00 (2.23, 7.17)",<0.00001
+10,Headache,Retatrutide 4,Placebo,0,"1.38 (0.28, 6.76)",0.69
+11,Headache,Retatrutide 8,Placebo,0,"3.18 (0.81, 12.55)",0.1
+12,Headache,Retatrutide 12,Placebo,62,"2.31 (0.54, 9.83)",0.26
+13,Dyspepsia,Retatrutide 4,Placebo,NA,"1.06 (0.15, 7.31)",0.95
+14,Dyspepsia,Retatrutide 8,Placebo,0,"2.52 (0.60, 10.67)",0.21
+15,Dyspepsia,Retatrutide 12,Placebo,0,"3.36 (1.02, 11.04)",0.05
+16,Diarrhea,Retatrutide 4,Placebo,52,"1.64 (0.77, 3.49)",0.2
+17,Diarrhea,Retatrutide 8,Placebo,46,"2.51 (1.26, 5.00)",0.009
+18,Diarrhea,Retatrutide 12,Placebo,11,"2.04 (1.06, 3.94)",0.03
+19,Decreased appetite,Retatrutide 4,Placebo,18,"3.28 (1.41, 7.62)",0.006
+20,Decreased appetite,Retatrutide 8,Placebo,47,"3.68 (1.60, 8.45)",0.002
+21,Decreased appetite,Retatrutide 12,Placebo,31,"4.64 (2.05, 10.50)",0.0002
+22,Constipation,Retatrutide 4,Placebo,0,"4.41 (1.29, 15.13)",0.02
+23,Constipation,Retatrutide 8,Placebo,0,"4.17 (1.22, 14.28)",0.02
+24,Constipation,Retatrutide 12,Placebo,0,"4.41 (1.50, 12.93)",0.007
+25,AES leading to treatmentdiscontinuation,Retatrutide 4,Placebo,67,"2.62 (0.63, 10.87)",0.18
+26,AES leading to treatmentdiscontinuation,Retatrutide 8,Placebo,0,"4.45 (1.17, 17.01)",0.03
+27,AES leading to treatmentdiscontinuation,Retatrutide 12,Placebo,0,"6.70 (2.06, 21.85)",0.002
+28,Abdominal pain,Retatrutide 4,Placebo,22,"1.42 (0.28, 7.23)",0.67
+29,Abdominal pain,Retatrutide 8,Placebo,0,"3.29 (0.82, 13.28)",0.09
+30,Abdominal pain,Retatrutide 12,Placebo,0,"2.23 (0.57, 8.71)",
