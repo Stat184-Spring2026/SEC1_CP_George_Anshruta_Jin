@@ -14,17 +14,6 @@ RetatrutideRawData <- read_html(
 #loading the specific table
 RetatrutideEffects <- RetatrutideRawData[[4]]
 
-#loading the semaglutide dataset from the govt website
-SemaglutideRawData <- read_html(
-  x = "https://pmc.ncbi.nlm.nih.gov/articles/PMC7905697/"
-)|>
-
-  html_elements(css = "table")|>
-  html_table()
-
-#loading the semaglutide effects table
-SemaglutideEffects <- SemaglutideRawData[[3]]
-
 
 ##cleaning data for retatrutide
 RetatrutideCData <- RetatrutideEffects |>
