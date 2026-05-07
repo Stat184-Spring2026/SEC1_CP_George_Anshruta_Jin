@@ -20,9 +20,9 @@ The goal was to see whether Retatrutide actually causes weight loss, how strong 
 
 All data was hand extracted from published clinical trial tables.
 
-- **NEJM 2023 Retatrutide Phase 2 Trial** (Jastreboff et al., 2023) — main source for baseline characteristics and outcomes. ClinicalTrials.gov: NCT04881760
-- **FDA Semaglutide Product Label** (FDA, 2023) — used for semaglutide comparison numbers
-- **PMC GLP-1 Review Article** (PMC, 2024) — used for class-wide context on the GLP-1 drug class
+- **NEJM 2023 Retatrutide Phase 2 Trial** (Jastreboff et al., 2023) : main source for baseline characteristics and outcomes. ClinicalTrials.gov
+- **FDA Semaglutide Product Label** (FDA, 2023) : used for semaglutide comparison numbers
+- **PMC GLP-1 Review Article** (PMC, 2024): used for class context on the GLP-1 drug class
 - **Course:** STAT 184, Penn State, Spring 2026
 
 ## Meta Goals
