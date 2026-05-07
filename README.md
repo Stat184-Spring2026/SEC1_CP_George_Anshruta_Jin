@@ -1,4 +1,4 @@
-# Retatrutide vs Placebo — GLP-1 Analysis
+# Retatrutide vs Placebo → GLP-1 Analysis
 
 A reproducible analysis of the Phase 2 clinical trial of Retatrutide, a new GLP-1 receptor agonist for treating obesity. We compare weight loss outcomes across the placebo group and six different Retatrutide doses, and benchmark the results against semaglutide and the broader GLP-1 class.
 
