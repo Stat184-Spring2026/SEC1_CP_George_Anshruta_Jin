@@ -1,0 +1,430 @@
+---
+title: "Retatrutide vs Placebo: A GLP-1 Weight Loss Analysis"
+author: "George Dayoub, Anshruta Rahar, Jin Won"
+date: "May 6, 2026"
+format: 
+  pdf: 
+    toc: false
+    number-sections: true
+    number-depth: 5
+    fig-align: center
+    cap-location: top
+    geometry: 
+      - top=1in
+      - left=1in
+      - right=1in
+      - bottom=1in
+    colorlinks: true
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{
+          commandchars=\\\{\},
+          breaklines, breaknonspaceingroup, breakanywhere
+        }
+execute: 
+  echo: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# style guide: tidyverse style guide (https://style.tidyverse.org/)
+# author: George Dayoub
+# reviewed by: Anshruta Rahar, Jin Won
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+```
+
+# Introduction
+\hrule
+
+Obesity has become one of the largest public health challenges of the modern era, affecting hundreds of millions of adults worldwide and contributing to a wide range of related conditions including type 2 diabetes, cardiovascular disease, and certain cancers. Over the past several years, a class of drugs known as GLP-1 receptor agonists has emerged as one of the most promising treatments. Semaglutide, sold under the brand names Ozempic and Wegovy, is the most well known and has produced significant weight loss results in clinical trials. More recently, however, a new drug called Retatrutide has been generating attention because early trials suggest it may produce even greater weight loss than any GLP-1 drug currently on the market.
+
+Our team wanted to dig into the actual clinical trial data behind Retatrutide to see what the numbers say. The Phase 2 trial published in the New England Journal of Medicine (Jastreboff et al., 2023) randomized 338 adults with obesity into seven groups: a placebo group and six different doses of Retatrutide ranging from 1 mg to 12 mg. Over 48 weeks, the researchers tracked weight loss, body mass index, waist circumference, and adverse events across all groups.
+
+This report walks through what the data tells us about whether Retatrutide actually works, how strong the dose response effect is and what the placebo group reveals about whether the weight loss is really being caused by the drug. Throughout the report we also benchmark Retatrutide against semaglutide (FDA, 2023) and the broader GLP-1 class (PMC, 2024) to put the results in context. The bigger goal for us as a team was to practice causal reasoning in clinical trial data, where the comparison between treatment and placebo is what lets us say with confidence that an effect is real.
+
+# Data Provenance
+\hrule
+
+The data in this report was extracted from published clinical trial tables in three peer reviewed sources. Individual patient data is not publicly available for these trials, so all of our analysis is based on the summary statistics, group means, and outcome tables published in these sources. We had to hand extract the values from the published tables into R tibbles, which preserves the ease of it being found and means anyone running our code can verify the numbers against the original papers.
+
+Our three primary sources are:
+
+1. **NEJM 2023 Retatrutide Phase 2 Trial** (Jastreboff et al., 2023)  the central source for our analysis. This is where Table 1 (baseline characteristics, used for @tbl-baseline-chars and @fig-baseline) and Table 2 (primary and secondary endpoints, used for @fig-weightloss, @fig-doseresponse, @tbl-responders, and @tbl-summary) come from. The trial is registered under ClinicalTrials.gov identifier NCT04881760.
+2. **FDA Semaglutide Product Label** (FDA, 2023) the source for our semaglutide comparison numbers, including dosing and adverse event rates.
+3. **PMC GLP-1 Review Article** (PMC, 2024)  used for class-wide context on how GLP-1 drugs work and how they compare to each other.
+
+
+# FAIR and CARE Principles
+\hrule
+
+The data we used follows the FAIR principles well. The NEJM trial paper is Findable through medical and scientific databases like PubMed, NEJM's own search, and ClinicalTrials.gov, where the trial is registered as NCT04881760. It is Accessible because the paper is openly available through the NEJM website, the FDA label is publicly hosted on the FDA's regulatory database, and the PMC review article is hosted in the freely available PubMed Central archive. The data is Interoperable since the published tables use standard clinical trial reporting formats that line up easily across studies and can be put into any standard data analysis tool. Finally, it is Reusable because all sources are openly cited and freely linkable, and licensed in a way that allows reproduction and reanalysis.
+
+The CARE principles apply less directly here since this is data about adults in a clinical trial rather than data about Indigenous communities. However, the trial itself reflects the Collective Benefit principle by reporting outcomes that contribute to public health understanding of obesity treatment, the Authority to Control principle by being conducted under informed consent and IRB oversight, the Responsibility principle by being transparently reported under standard clinical trial registration, and the Ethics principle by following the established ethical guidelines for human subjects research.
+
+{{< pagebreak >}}
+
+# The Retatrutide Trial: Setup and Design
+\hrule
+
+The trial we are analyzing is the Phase 2 study of Retatrutide published in the New England Journal of Medicine in 2023. It enrolled 338 adults who had obesity, defined as a body mass index of at least 30, or 27 with at least one weight-related health condition. Participants were randomly assigned to one of seven groups: placebo or one of six different Retatrutide doses (1 mg, 4 mg with two different starting doses, 8 mg with two different starting doses, and 12 mg). Each participant received their assigned treatment for 48 weeks alongside lifestyle counseling, and researchers tracked their weight, BMI, waist circumference, and any side effects throughout the trial.
+
+The reason the trial uses so many different dose groups is that researchers wanted to map out a dose-response curve. If a drug really works, you generally expect to see that higher doses produce bigger effects up to some maximum, and that pattern is what gives doctors and regulators confidence that the effect is real and not just random noise. The placebo group is even more important. Without it, you cannot tell whether weight loss in the treatment groups is being caused by the drug, by lifestyle counseling, by general health awareness from being in a trial, or by chance.
+
+# Who Was in the Trial?
+\hrule
+
+Before getting into outcomes, it helps to know who actually participated. @tbl-baseline-chars shows the baseline characteristics of the participants in each group, including age, sex, BMI, and the prevalence of common health conditions. The numbers across each row are very similar, showing that the randomization process produced groups that were comparable on the things that matter most.
+
+```{r}
+#| label: tbl-baseline-chars
+#| tbl-cap: "Baseline Characteristics of Trial Participants Across Treatment Groups"
+#| tbl-pos: H
+#| html-table-processing: none
+
+# author: Jin Won
+# reviewed by: George Dayoub, Anshruta Rahar
+
+# baseline characteristics table from the published nejm trial
+# shows age, sex, bmi, and comorbidities across all seven groups
+baseline_chars <- tibble(
+  arm           = c("placebo", "1 mg", "4 mg (ID 2)", "4 mg (ID 4)",
+                    "8 mg (ID 2)", "8 mg (ID 4)", "12 mg (ID 2)"),
+  n             = c(70, 69, 33, 34, 35, 35, 62),
+  age           = c(48.0, 50.6, 50.8, 46.8, 46.1, 48.7, 45.8),
+  female_pct    = c(49, 48, 48, 47, 49, 49, 48),
+  bmi           = c(37.3, 37.5, 37.3, 37.4, 37.4, 37.0, 37.4),
+  hypertension  = c(57, 43, 45, 35, 34, 37, 35),
+  prediabetes   = c(37, 39, 45, 29, 31, 43, 31)
+)
+
+# turn into a clean styled table
+baseline_chars |>
+  kable(col.names = c("Treatment Group", "N", "Age (yrs)", "Female (%)",
+                      "BMI", "Hypertension (%)", "Prediabetes (%)"),
+        digits = 1,
+        booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE,
+                position = "center") |>
+  row_spec(0, bold = TRUE, color = "white", background = "#8B0000")
+```
+
+Looking at @tbl-baseline-chars, the average age across groups landed between 45 and 51 years, the percentage of female participants stayed close to 48 percent across the board, and average BMI was nearly identical at around 37 in every group. Prediabetes showed up in about a third of each group and hypertension ran somewhere between 35 and 57 percent. Hypertension was the only one that really varied. The placebo group came in highest at 57 percent. That kind of small imbalance is hard to avoid in a trial this size and probably does not change the weight loss results much.
+
+{{< pagebreak >}}
+
+# Were the Groups Comparable to Begin With?
+\hrule
+
+We also wanted to look directly at starting weight, since that is the most important number for an obesity trial. If groups started at different weights, comparing how much weight they lost would be unfair. @fig-baseline shows the average starting weight across all seven groups.
+
+```{r}
+#| label: fig-baseline
+#| fig-cap: "Average Starting Weight Across Treatment Groups"
+#| fig-pos: H
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "A bar chart showing the average starting weight in kilograms for each of the seven treatment groups in the Retatrutide trial. All groups started between 106 and 109 kilograms, showing the groups were balanced at baseline."
+
+# author: George Dayoub
+# reviewed by: Anshruta Rahar, Jin Won
+
+baseline <- tibble(
+  arm              = c("placebo", "1 mg", "4 mg (ID 2)", "4 mg (ID 4)",
+                       "8 mg (ID 2)", "8 mg (ID 4)", "12 mg (ID 2)"),
+  dose             = c(0, 1, 4, 4, 8, 8, 12),
+  n                = c(70, 69, 33, 34, 35, 35, 62),
+  weight_mean      = c(109.2, 106.4, 108.0, 107.0, 106.5, 108.6, 108.0),
+  weight_sd        = c(20.9, 19.8, 26.3, 21.3, 21.6, 20.9, 21.7)
+)
+
+baseline$arm <- factor(baseline$arm,
+                       levels = c("placebo", "1 mg", "4 mg (ID 2)", "4 mg (ID 4)",
+                                  "8 mg (ID 2)", "8 mg (ID 4)", "12 mg (ID 2)"))
+
+ggplot(baseline, aes(x = arm, y = weight_mean, fill = arm)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = paste0(weight_mean, " kg")),
+            vjust = -0.5, size = 3.5, fontface = "bold") +
+  scale_fill_manual(values = c("#FFB3B3", "#FF6B6B", "#E63946",
+                               "#C1121F", "#8B0000", "#5C0000", "#2D0000")) +
+  labs(title = "Retatrutide Trial: Average Starting Weight Was Consistent Across Groups",
+       subtitle = "Average starting weight across the placebo and Retatrutide dose groups",
+       x = "Treatment Group",
+       y = "Weight (kg)") +
+  ylim(0, 145) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 11, color = "gray40"),
+        axis.title = element_text(size = 11, face = "bold"),
+        axis.text.x = element_text(size = 10))
+```
+
+Looking at @fig-baseline, every group landed between 106 and 109 kilograms on average, a span of just under 3 kilograms across seven different groups of around 33 to 70 participants each. This is the kind of result you want to see at the start of a trial because it means the randomization actually worked. With everyone starting in roughly the same place, any large difference we see at the end of 48 weeks is much more likely to be the result of the actual treatment they received rather than a side effect of the groups being different to begin with. This is the foundation that makes the rest of our analysis trustworthy.
+
+{{< pagebreak >}}
+
+# After 48 Weeks: How Much Weight Did Each Group Lose?
+\hrule
+
+With the groups confirmed to be balanced at the start, we can now look at what happened to each group over the 48 weeks of treatment. @fig-weightloss shows the average kilograms lost by each group at the end of the trial.
+
+```{r}
+#| label: fig-weightloss
+#| fig-cap: "Average Weight Lost After 48 Weeks of Treatment"
+#| fig-pos: H
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "A bar chart showing the average kilograms lost in each treatment group after 48 weeks. The placebo group lost less than 2 kilograms while the highest dose group lost over 26 kilograms, showing a clear dose-response relationship."
+
+# author: Jin Won
+# reviewed by: Anshruta Rahar, George dayoub
+
+outcomes <- tibble(
+  arm                  = c("placebo", "1 mg", "4 mg (ID 2)", "4 mg (ID 4)",
+                           "8 mg (ID 2)", "8 mg (ID 4)", "12 mg (ID 2)"),
+  dose                 = c(0, 1, 4, 4, 8, 8, 12),
+  n                    = c(70, 69, 33, 34, 35, 35, 62),
+  weight_pct_48wk      = c(-2.1, -8.7, -16.3, -17.8, -21.7, -23.9, -24.2),
+  weight_kg            = c(-1.8, -9.4, -17.3, -19.1, -23.5, -25.9, -26.2),
+  pct_lost_5           = c(27, 64, 87, 97, 100, 100, 100),
+  pct_lost_10          = c(9, 27, 73, 76, 90, 91, 93),
+  pct_lost_15          = c(2, 16, 55, 64, 73, 77, 83)
+)
+
+outcomes$arm <- factor(outcomes$arm,
+                       levels = c("placebo", "1 mg", "4 mg (ID 2)", "4 mg (ID 4)",
+                                  "8 mg (ID 2)", "8 mg (ID 4)", "12 mg (ID 2)"))
+
+ggplot(outcomes, aes(x = arm, y = -weight_kg, fill = arm)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = paste0(-weight_kg, " kg")),
+            vjust = -0.5, size = 3.5, fontface = "bold") +
+  scale_fill_manual(values = c("#FFB3B3", "#FF6B6B", "#E63946",
+                               "#C1121F", "#8B0000", "#5C0000", "#2D0000")) +
+  labs(title = "Retatrutide Trial: Higher Doses Led to Far Greater Weight Loss",
+       subtitle = "Average kilograms lost after 48 weeks of treatment",
+       x = "Treatment Group",
+       y = "Weight Lost (kg)") +
+  ylim(0, 32) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 11, color = "gray40"),
+        axis.title = element_text(size = 11, face = "bold"),
+        axis.text.x = element_text(size = 10))
+```
+
+The results in @fig-weightloss are striking. The placebo group lost only 1.8 kilograms on average over the entire 48 weeks, which is essentially what you would expect from general lifestyle counseling alone. The 1 mg Retatrutide group lost 9.4 kilograms, already a five-fold improvement over placebo. Each step up in dose led to a clear additional drop, and by the time you reach the 12 mg group, the average participant had lost 26.2 kilograms, which works out to roughly a quarter of their starting body weight.
+
+This kind of dose-response pattern is exactly what researchers look for as evidence that a drug is genuinely working. If the weight loss were caused by something other than the drug, we would not expect to see a smooth, predictable increase in effect as the dose goes up. The fact that each higher dose produced more weight loss in a consistent way is one of the strongest pieces of evidence that the drug itself is responsible for the effect.
+
+We also found it worth comparing these numbers to what semaglutide produced in its own Phase 3 trials. Semaglutide at the 2.4 mg weekly dose (the dose approved for chronic weight management) produced an average weight loss of around 15 percent of body weight over 68 weeks (FDA, 2023). Retatrutide at 12 mg produced 24 percent over only 48 weeks, suggesting it may be substantially more powerful than the leading existing drug in the GLP-1 class.
+
+{{< pagebreak >}}
+
+# Visualizing the Dose-Response Relationship
+\hrule
+
+Bar charts make it easy to compare individual groups, but to really see how weight loss changes with dose we need to plot it as a curve. @fig-doseresponse shows the percentage of body weight lost as a function of the maintenance dose, with the placebo group anchoring the curve at the zero-dose mark.
+
+```{r}
+#| label: fig-doseresponse
+#| fig-cap: "Dose-Response Curve for Retatrutide at 48 Weeks"
+#| fig-pos: H
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "A line plot with points showing the relationship between Retatrutide dose and percent body weight lost after 48 weeks. The line rises sharply from placebo at zero dose, climbs through 1 mg and 4 mg, and starts to flatten between 8 mg and 12 mg, showing a typical dose-response curve approaching its maximum effect."
+
+# author: Anshruta Rahar
+# reviewed by: George Dayoub, Jin Won
+
+# we plot dose on x and weight loss on y to see the curve shape
+# flip the % change to a positive number so the curve goes up
+ggplot(outcomes, aes(x = dose, y = -weight_pct_48wk)) +
+  geom_line(color = "#8B0000", linewidth = 1.2) +
+  geom_point(aes(color = arm), size = 4) +
+  geom_text(aes(label = paste0(-weight_pct_48wk, "%")),
+            vjust = -1, size = 3.5, fontface = "bold") +
+  scale_color_manual(values = c("#FFB3B3", "#FF6B6B", "#E63946",
+                                "#C1121F", "#8B0000", "#5C0000", "#2D0000")) +
+  scale_x_continuous(breaks = c(0, 1, 4, 8, 12)) +
+  labs(title = "Retatrutide Trial: Weight Loss Climbs Steeply With Dose",
+       subtitle = "Percent body weight lost after 48 weeks at each maintenance dose",
+       x = "Maintenance Dose (mg)",
+       y = "Body Weight Lost (%)",
+       color = "Treatment Group") +
+  ylim(0, 32) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(size = 11, color = "gray40"),
+        axis.title = element_text(size = 11, face = "bold"),
+        legend.position = "right")
+```
+
+@fig-doseresponse shows the shape of the response very clearly. From the placebo group at zero dose, the curve climbs steeply through 1 mg and 4 mg, then continues climbing more gradually through 8 mg before starting to flatten near the 12 mg point. This is the classic shape of a dose-response curve that is approaching its maximum effect, where each additional unit of drug produces less additional weight loss than the unit before it.
+
+This shape matters because it tells us something about how the drug works at the biological level. If the weight loss were just being caused by something unrelated to the drug, we would not expect to see this kind of smooth saturation pattern. The flattening near the top suggests that the drug's effect on the GLP-1, GIP, and glucagon receptors may be approaching the point where adding more drug stops making a meaningful difference. From a clinical standpoint, this is also useful information because it suggests that pushing doses much higher than 12 mg might not produce proportionally more weight loss while potentially adding more side effects.
+
+{{< pagebreak >}}
+
+# How Many People Actually Lost Meaningful Weight?
+\hrule
+
+Average weight loss is a useful number, but it can hide what is happening to individuals within a group. To check whether the effect was widespread or driven by a few big responders, we look at the percentage of people in each group who lost at least 5%, 10%, or 15% of their starting body weight. These thresholds are widely used in obesity medicine because they correspond to clinically meaningful health benefits. @tbl-responders shows these numbers across all seven groups.
+
+```{r}
+#| label: tbl-responders
+#| tbl-cap: "Percentage of Participants Reaching Each Weight Loss Goal at 48 Weeks"
+#| tbl-pos: H
+#| html-table-processing: none
+
+# author: Anshruta Rahar
+# reviewed by: George Dayoub, Jin Won
+
+# pull out just the responder columns from the outcomes table
+responder_table <- outcomes |>
+  select(arm, n, pct_lost_5, pct_lost_10, pct_lost_15)
+
+# turn it into a clean styled table
+responder_table |>
+  kable(col.names = c("Treatment Group", "N",
+                      "Lost 5% or More",
+                      "Lost 10% or More",
+                      "Lost 15% or More"),
+        digits = 0,
+        booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE,
+                position = "center") |>
+  row_spec(0, bold = TRUE, color = "white", background = "#8B0000") |>
+  row_spec(1, background = "#FFE5E5") |>
+  row_spec(7, background = "#FFB3B3")
+```
+
+@tbl-responders is one of the most striking parts of the entire dataset. In the placebo group, only 27 percent of participants managed to lose at least 5 percent of their body weight, and only 2 percent reached the 15 percent threshold. In the 12 mg group, 100 percent of participants lost at least 5 percent of their body weight, 93 percent lost at least 10 percent, and 83 percent lost at least 15 percent. That is a dramatic difference. It shows that on the higher doses, the drug is not just producing big average effects driven by a few extreme responders. It is producing meaningful weight loss in nearly everyone who takes it.
+
+This is an important finding because in real world treatment, patients want to know what their personal odds of success look like, not just the average across a group. A drug where 100 percent of people lose at least 5 percent is a very different proposition from a drug where the average person loses some amount but a quarter of patients see no benefit at all. The numbers in @tbl-responders suggest Retatrutide is in the first category.
+
+{{< pagebreak >}}
+
+# What the Placebo Group Tells Us
+\hrule
+
+The placebo group is the part of @fig-weightloss that gives the rest of the chart its meaning. People in the placebo group received the same lifestyle counseling, attended the same clinical visits, and went through the same trial procedures as everyone in the treatment groups. The only thing they did not get was the actual drug. The fact that they lost only 1.8 kilograms on average tells us that without the drug, the trial setup itself produced almost no weight loss.
+
+This is what makes the comparison between groups meaningful in causal terms. In observational data, when you see a person lose weight, it is hard to know whether the weight loss came from the drug they were taking, from lifestyle changes or things from social context, or from something else entirely. In a randomized trial with a placebo group, you can isolate the effect of the drug specifically because the only systematic difference between the placebo group and any treatment group is whether they received Retatrutide.
+
+If we interpret the difference between placebo and 12 mg as the drug's contribution, that comes out to roughly 24 kilograms of additional weight loss attributable to Retatrutide over 48 weeks. This is a substantial effect by the standards of any obesity treatment and helps explain why the drug has generated so much interest in the medical community.
+
+{{< pagebreak >}}
+
+# Putting It All Together: The Summary Table
+\hrule
+
+@tbl-summary brings the starting weight from @fig-baseline together with the weight loss from @fig-weightloss to show where each group started, where they ended, and how much they lost in both kilograms and percentage of body weight.
+
+```{r}
+#| label: tbl-summary
+#| tbl-cap: "Retatrutide Trial: Weight Loss Summary After 48 Weeks"
+#| tbl-pos: H
+#| html-table-processing: none
+
+# author: George Dayoub
+# reviewed by: Anshruta Rahar, Jin Won
+
+summary_table <- baseline |>
+  select(arm, weight_mean) |>
+  inner_join(outcomes |> select(arm, weight_kg, weight_pct_48wk),
+             by = "arm") |>
+  mutate(ending_weight = weight_mean + weight_kg) |>
+  select(arm, weight_mean, ending_weight, weight_kg, weight_pct_48wk)
+
+summary_table |>
+  kable(col.names = c("Treatment Group",
+                      "Starting Weight (kg)",
+                      "Ending Weight (kg)",
+                      "Change (kg)",
+                      "Change (%)"),
+        digits = 1,
+        booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE,
+                position = "center") |>
+  row_spec(0, bold = TRUE, color = "white", background = "#8B0000") |>
+  row_spec(1, background = "#FFE5E5") |>
+  row_spec(7, background = "#FFB3B3")
+```
+
+The numbers in @tbl-summary tell the same story as the plots but with more precision. The placebo group ended at almost the same weight they started at, dropping from 109.2 kilograms to 107.4 kilograms. The 12 mg group dropped from 108 kilograms down to about 81.8 kilograms, a change so large that it is rare for any obesity treatment that does not involve surgery. Looking across the rows, you can also see that the 4 mg, 8 mg, and 12 mg groups produced substantially different results from each other, which reinforces that dose actually matters and is not just a marketing distinction.
+
+One detail worth noting is that the two 8 mg groups (one starting at 2 mg, the other at 4 mg) ended up with somewhat different results, with the 4 mg starting  dose group losing slightly more weight on average. This difference suggests that the dose escalation schedule may also matter, not just the final maintenance dose. This is the kind of subtlety that becomes visible when you look at the table values directly rather than just at a chart.
+
+# Limitations
+\hrule
+
+While the results we see are compelling, there are several limitations to keep in mind. This is a Phase 2 trial, which means it is designed to test efficacy and safety in a normal sized population over a moderate time horizon. The 338 participants and 48-week duration are good for establishing whether the drug has an effect, but they are not large enough or long enough to confidently characterize rare side effects or to establish whether the weight loss keeps going once the drug is stopped. The Phase 3 trial currently underway should help answer those questions.
+
+A second limitation is that the trial population was 88 percent White, with much smaller representation from Black, Asian, and other groups. While the drug should in principle work the same way across populations, generalizing the exact effect sizes to more diverse populations requires more research.
+
+Finally, our analysis is limited by the fact that we only had access to summary statistics published in the NEJM paper rather than the underlying real life data. This means we cannot run our own statistical tests, look at individual variation within groups, or analyze subgroups. Anyone wanting to extend our analysis would need to apply for access to the trial data through the trial sponsor.
+
+{{< pagebreak >}}
+
+# Conclusion
+\hrule
+
+The takeaway is simple. Retatrutide works, and it works in a big way. Weight loss climbs steadily with the dose and beats placebo by 22 to 24 percentage points, putting it ahead of even semaglutide. The placebo group is what makes the rest of the numbers convincing. Those participants went through the same trial as everyone else but barely lost any weight, so the difference really does come from the drug.
+
+The most useful part of this project for us was seeing how a trial is actually built to answer a causal question. The random assignment kept the groups balanced, the placebo arm isolated the drug's effect, and the dose escalation let us see the response as a curve rather than a yes or no. None of those are small details. They are what let us say the drug caused the weight loss instead of guessing.
+
+The data side was the hardest part. We tried to scrape the trial tables off NEJM, but most of them were behind paywalls or in PDFs that did not parse cleanly. In the end we typed the values into R tibbles by hand. It was slow, but it forced us to read each row carefully, and we ended up knowing the data better than if the scrape had just worked.
+
+Phase 3 will tell us how well these results hold up at scale and whether the weight loss sticks once the drug is stopped. For now though the Phase 2 numbers make it pretty obvious why Retatrutide is getting so much attention in obesity medicine right now.
+
+
+{{< pagebreak >}}
+
+# Author Contributions
+\hrule
+
+We all worked on this project together. Each of us helped with planning, pulling the data, building plots and tables, writing the report, and reviewing each other's work.
+
+**George Dayoub** built Figure 1 and Table 3.
+
+**Anshruta Rahar** built Figure 3 and Table 2.
+
+**Jin Won** built Figure 2 and Table 1.
+
+{{< pagebreak >}}
+
+# References
+\hrule
+
+Jastreboff, A. M., Kaplan, L. M., Frias, J. P., Wu, Q., Du, Y., Gurbuz, S., Coskun, T., Haupt, A., Milicevic, Z., & Hartman, M. L. (2023). Triple-Hormone-Receptor Agonist Retatrutide for Obesity — A Phase 2 Trial. *New England Journal of Medicine, 389*(6), 514–526. https://doi.org/10.1056/NEJMoa2301972
+
+U.S. Food and Drug Administration. (2023). *Wegovy (semaglutide) prescribing information*. https://www.accessdata.fda.gov/drugsatfda_docs/label/2023/209637s020s021lbl.pdf
+
+PMC GLP-1 Review Authors. (2024). *GLP-1 receptor agonists in obesity treatment: A class review*. PubMed Central. https://pmc.ncbi.nlm.nih.gov/articles/PMC12026077/
+
+{{< pagebreak >}}
+
+# Code Appendix
+\hrule
+
+```{r}
+#| label: codeAppend
+#| ref-label: !expr knitr::all_labels()
+#| echo: true
+#| eval: false
+
+```
