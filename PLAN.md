@@ -6,11 +6,10 @@
 - George Dayoub
 
 ## Topic
-We're looking at GLP-1 drugs, specifically Retatrutide, which is one of the newer ones getting a lot of attention. The plan is to look at clinical trial data comparing Retatrutide to placebo, and also compare it to other GLP-1 drugs like semaglutide to see how they actually stack up against each other.
+We're looking at GLP-1 drugs, specifically Retatrutide, which is one of the newer ones getting a lot of attention. The plan is to look at clinical trial data comparing Retatrutide to placebo to see if it works and how well it does.
 
 ## Goals
 - Look at the Retatrutide vs placebo trial data and figure out what it actually says about the drug's effects.
-- Compare Retatrutide to other GLP-1 drugs and see where the real differences are.
 - Get better at exploratory data analysis and writing reports that someone else could actually reproduce.
 
 ## Meta Goals
@@ -19,8 +18,6 @@ We're looking at GLP-1 drugs, specifically Retatrutide, which is one of the newe
 
 ## Research Questions
 1. How does Retatrutide compare to placebo on weight change?
-2. How does Retatrutide stack up against other GLP-1s like semaglutide?
-3. What about side effects ? , How do the adverse event profiles compare?
 4. Does dose actually matter, or do you get most of the benefit at lower doses?
 
 ## What We Need
